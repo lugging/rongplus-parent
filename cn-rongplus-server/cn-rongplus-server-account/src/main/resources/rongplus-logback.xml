@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="10 seconds">
+
+    <springProperty scope="context" name="logPath" source="rongplus.logs.path" defaultValue="${rongplus.home}/logs"/>
+    <springProperty scope="context" name="SERVER_NAME" source="spring.application.name" defaultValue="${rongplus.service.name}"/>
+
+    <property name="LOG_HOME" value="${logPath}"/>
+    <property name="LOGGER_MSG" value="%d{yyyy-MM-dd}|%d{HH:mm:ss.SSS}|[%-5level]|[%thread]|%X{THREAD_ID}|%logger{36} %F.%L - %msg%n"></property>
+    <property name="LOG_CHARSET" value="UTF-8" />
+    <property name="LOG_DIR" value="${LOG_HOME}/%d{yyyyMMdd}" />
+    <property name="APP_NAME" value="${SERVER_NAME}"/>
+    <property name="FILE_CHARSET" value="utf-8" />
+    <property name="FILE_MAX_HISTORY" value="30" /><!-- 30天之后，就会删除旧的日志 -->
+    <property name="FILE_MAX_SIZE" value="30MB" /><!-- 单个日志文件最多30MB -->
+    <property name="TOTAL_MAX_SIZE" value="5GB" /><!-- 指定总的上限大小 -->
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOGGER_MSG}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="ROOT_FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/${APP_NAME}_all.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_HOME}/%d{yyyyMMdd}/${APP_NAME}_all_%i.log</FileNamePattern>
+            <maxFileSize>${FILE_MAX_SIZE}</maxFileSize>
+            <maxHistory>${FILE_MAX_HISTORY}</maxHistory>
+            <totalSizeCap>${TOTAL_MAX_SIZE}</totalSizeCap>
+           <!-- <cleanHistoryOnStart>true</cleanHistoryOnStart>-->
+        </rollingPolicy>
+        <encoder>
+            <charset>${FILE_CHARSET}</charset>
+            <Pattern>${LOGGER_MSG}</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC_ROOT_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="ROOT_FILE"/>
+    </appender>
+
+    <appender name="FILE_ERROR"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/${APP_NAME}_err.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <OnMismatch>DENY</OnMismatch>
+            <OnMatch>ACCEPT</OnMatch>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <FileNamePattern>${LOG_HOME}/%d{yyyyMMdd}/${APP_NAME}_err_%i.log</FileNamePattern>
+            <maxFileSize>${FILE_MAX_SIZE}</maxFileSize>
+            <maxHistory>${FILE_MAX_HISTORY}</maxHistory>
+            <totalSizeCap>${TOTAL_MAX_SIZE}</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+        <encoder>
+            <charset>${FILE_CHARSET}</charset>
+            <pattern>${LOGGER_MSG}</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="cn.rongplus.msg.Bootstrap">
+        <appender-ref ref="CONSOLE"/>
+        <level value="INFO"/>
+    </logger>
+
+    <root>
+        <level value="INFO"/>
+        <appender-ref ref="FILE_ERROR" />
+        <appender-ref ref="ASYNC_ROOT_FILE"/>
+    </root>
+</configuration>
+
